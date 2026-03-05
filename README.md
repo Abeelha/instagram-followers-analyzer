@@ -1,4 +1,4 @@
-# 🐝 Instagram Follower Matrix Analyzer
+# Instagram Follower Matrix Analyzer
 
 **A lightweight, fast, and easy-to-use Rust application for analyzing Instagram follower relationships**
 <img width="1113" height="626" alt="image" src="https://github.com/user-attachments/assets/d73645be-4bdc-4dfa-bd33-4b30e9b96f51" />
@@ -8,11 +8,11 @@
 
 [![Download Latest Release](https://img.shields.io/badge/Download-Latest%20Release-yellow?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Abeelha/-friends--to-unfollow-instagram/releases/tag/0.1.0)
 
-## 🎯 Purpose
+## Purpose
 
 This tool analyzes your Instagram account data to identify accounts you're following that don't follow you back. Simply download your Instagram data (followers and following JSON files) and let our analyzer do the work.
 
-## ⚡ Features
+## Features
 
 - **Plug & Play**: Drop in your JSON files and get instant results
 - **Lightning Fast**: Built in Rust for maximum performance
@@ -20,7 +20,7 @@ This tool analyzes your Instagram account data to identify accounts you're follo
 - **Zero Dependencies**: Standalone executable, no installation required
 - **Privacy First**: All analysis happens locally on your machine
 
-## 🚀 Quick Start
+## Quick Start
 
 1. Download your Instagram data from Meta (Settings → Privacy → Download Your Information)
 2. Extract the `followers_1.json` and `following.json` files
@@ -35,7 +35,7 @@ This tool analyzes your Instagram account data to identify accounts you're follo
 
 
 
-## 🎨 UI Design
+## UI Design
 
 Inspired by matrix aesthetics with a bee twist:
 - **Primary Colors**: Synth-black backgrounds with electric yellow highlights
@@ -43,7 +43,7 @@ Inspired by matrix aesthetics with a bee twist:
 - **Typography**: Monospace fonts for that authentic terminal feel
 - **Animations**: Subtle matrix-style cascading effects
 
-## 🔧 Built With
+## Built With
 
 - **Rust** - For blazing fast performance and memory safety
 - **Lightweight Dependencies** - Minimal footprint, maximum efficiency
