@@ -87,54 +87,57 @@ fn main() -> Result<()> {
     let followers_path = matches.get_one::<String>("followers");
     let following_path = matches.get_one::<String>("following");
 
-    let (followers_file, following_file) = if followers_path.is_none() || following_path.is_none() {
-        // Try to find files next to executable for portable usage
-        let exe_dir = match std::env::current_exe() {
-            Ok(exe_path) => exe_path.parent().unwrap_or_else(|| Path::new(".")).to_path_buf(),
-            Err(_) => std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from(".")),
-        };
+    let exe_dir = match std::env::current_exe() {
+        Ok(exe_path) => exe_path.parent().unwrap_or_else(|| Path::new(".")).to_path_buf(),
+        Err(_) => std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from(".")),
+    };
 
-        let followers_auto = exe_dir.join("followers_1.json");
+    let (followers_files, following_file) = if followers_path.is_none() || following_path.is_none() {
         let following_auto = exe_dir.join("following.json");
 
-        if followers_auto.exists() && following_auto.exists() {
-            println!("🐝 Found Instagram data files next to executable!");
-            println!();
-            (followers_auto.to_string_lossy().to_string(), following_auto.to_string_lossy().to_string())
-        } else {
+        let mut found: Vec<String> = Vec::new();
+        let mut i = 1;
+        loop {
+            let candidate = exe_dir.join(format!("followers_{}.json", i));
+            if candidate.exists() {
+                found.push(candidate.to_string_lossy().to_string());
+                i += 1;
+            } else {
+                break;
+            }
+        }
+
+        if found.is_empty() || !following_auto.exists() {
             println!("🐝 Instagram Matrix Analyzer 🐝");
             println!();
             println!("❌ Missing Instagram data files!");
             println!();
-            println!("📁 For portable use:");
-            println!("   Place these files next to the .exe:");
+            println!("📁 Place ALL these files next to the .exe:");
             println!("   • followers_1.json");
+            println!("   • followers_2.json  (if it exists in your export)");
+            println!("   • followers_3.json  (and so on...)");
             println!("   • following.json");
             println!();
             println!("📋 Steps to get your data:");
             println!("1. Go to Instagram → Settings → Privacy → Download Your Information");
             println!("2. Select 'Followers and following' data");
-            println!("3. Extract and copy the JSON files next to this .exe");
-            println!();
-            println!("⚙️  Advanced usage:");
-            println!("   {} -f <followers.json> -g <following.json>", 
-                     std::env::current_exe()
-                         .unwrap_or_default()
-                         .file_name()
-                         .unwrap_or_default()
-                         .to_string_lossy());
+            println!("3. Extract and copy ALL followers_*.json files + following.json next to this .exe");
             println!();
             println!("Press Enter to exit...");
             let mut input = String::new();
             std::io::stdin().read_line(&mut input).ok();
             return Ok(());
         }
+
+        println!("🐝 Found {} followers file(s) + following.json", found.len());
+        println!();
+        (found, following_auto.to_string_lossy().to_string())
     } else {
-        (followers_path.unwrap().clone(), following_path.unwrap().clone())
+        (vec![followers_path.unwrap().clone()], following_path.unwrap().clone())
     };
 
-    let non_mutual = analyze_followers(&followers_file, &following_file)?;
-    
+    let non_mutual = analyze_followers(&followers_files, &following_file)?;
+
     if non_mutual.is_empty() {
         println!("🐝 Buzz! All your follows are mutual! Your digital hive is perfectly balanced.");
         println!();
@@ -148,7 +151,7 @@ fn main() -> Result<()> {
     println!();
     println!("⚠️  Important: Some results might be false positives due to:");
     println!("   • Instagram export timing differences");
-    println!("   • Missing follower files (followers_2.json, etc.)"); 
+    println!("   • Missing follower files (followers_2.json, etc.)");
     println!("   • Private/restricted account limitations");
     println!();
     println!("💡 Tip: Double-check by visiting profiles before unfollowing!");
@@ -230,7 +233,7 @@ fn run_app<B: ratatui::backend::Backend>(
 
 fn ui(f: &mut Frame, app: &mut App) {
     let size = f.size();
-    
+
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
@@ -261,7 +264,7 @@ fn ui(f: &mut Frame, app: &mut App) {
             } else {
                 Style::default().fg(Color::Rgb(255, 255, 0))
             };
-            
+
             ListItem::new(format!("🐝 @{}", username)).style(style)
         })
         .collect();

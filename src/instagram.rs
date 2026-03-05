@@ -6,13 +6,14 @@ use std::fs;
 #[derive(Debug, Deserialize, Serialize)]
 pub struct StringListData {
     pub href: String,
-    pub value: String,
+    pub value: Option<String>,
     pub timestamp: i64,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct FollowerEntry {
     pub title: String,
+    #[serde(default)]
     pub media_list_data: Vec<serde_json::Value>,
     pub string_list_data: Vec<StringListData>,
 }
@@ -22,36 +23,57 @@ pub struct FollowingData {
     pub relationships_following: Vec<FollowerEntry>,
 }
 
-pub fn analyze_followers(followers_path: &str, following_path: &str) -> Result<Vec<String>> {
-    let followers_data = fs::read_to_string(followers_path)
-        .with_context(|| format!("Failed to read followers file: {}", followers_path))?;
-    
+pub fn analyze_followers(followers_paths: &[String], following_path: &str) -> Result<Vec<String>> {
     let following_data = fs::read_to_string(following_path)
         .with_context(|| format!("Failed to read following file: {}", following_path))?;
 
-    let followers: Vec<FollowerEntry> = serde_json::from_str(&followers_data)
-        .with_context(|| "Failed to parse followers JSON")?;
-    
+    let mut all_follower_entries: Vec<FollowerEntry> = Vec::new();
+    for path in followers_paths {
+        let data = fs::read_to_string(path)
+            .with_context(|| format!("Failed to read followers file: {}", path))?;
+        let entries: Vec<FollowerEntry> = serde_json::from_str(&data)
+            .with_context(|| format!("Failed to parse followers JSON: {}", path))?;
+        all_follower_entries.extend(entries);
+    }
+
     let following: FollowingData = serde_json::from_str(&following_data)
         .with_context(|| "Failed to parse following JSON")?;
 
-    let follower_usernames: HashSet<String> = followers
+    let follower_usernames: HashSet<String> = all_follower_entries
         .iter()
-        .flat_map(|entry| &entry.string_list_data)
-        .map(|data| data.value.clone())
+        .flat_map(|entry| {
+            let from_value: Vec<String> = entry.string_list_data.iter()
+                .filter_map(|d| d.value.clone())
+                .filter(|v| !v.is_empty())
+                .collect();
+            if from_value.is_empty() && !entry.title.is_empty() {
+                vec![entry.title.clone()]
+            } else {
+                from_value
+            }
+        })
         .collect();
 
     let following_usernames: HashSet<String> = following
         .relationships_following
         .iter()
-        .flat_map(|entry| &entry.string_list_data)
-        .map(|data| data.value.clone())
+        .flat_map(|entry| {
+            let from_value: Vec<String> = entry.string_list_data.iter()
+                .filter_map(|d| d.value.clone())
+                .filter(|v| !v.is_empty())
+                .collect();
+            if from_value.is_empty() && !entry.title.is_empty() {
+                vec![entry.title.clone()]
+            } else {
+                from_value
+            }
+        })
         .collect();
 
-    // Print some stats for debugging
     println!("📊 Analysis Stats:");
+    println!("   • Followers files loaded: {}", followers_paths.len());
+    println!("   • Total followers: {} accounts", follower_usernames.len());
     println!("   • Following: {} accounts", following_usernames.len());
-    println!("   • Followers: {} accounts", follower_usernames.len());
     println!();
 
     let mut non_mutual_follows: Vec<String> = following_usernames
@@ -89,23 +111,19 @@ mod tests {
         let following_json = r#"{
             "relationships_following": [
                 {
-                    "title": "",
-                    "media_list_data": [],
+                    "title": "mutual_user",
                     "string_list_data": [
                         {
-                            "href": "https://www.instagram.com/mutual_user",
-                            "value": "mutual_user",
+                            "href": "https://www.instagram.com/_u/mutual_user",
                             "timestamp": 1234567890
                         }
                     ]
                 },
                 {
-                    "title": "",
-                    "media_list_data": [],
+                    "title": "non_mutual_user",
                     "string_list_data": [
                         {
-                            "href": "https://www.instagram.com/non_mutual_user",
-                            "value": "non_mutual_user",
+                            "href": "https://www.instagram.com/_u/non_mutual_user",
                             "timestamp": 1234567890
                         }
                     ]
