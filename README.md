@@ -6,7 +6,7 @@
 
 ## 📥 Download
 
-[![Download Latest Release](https://img.shields.io/badge/Download-Latest%20Release-yellow?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Abeelha/-friends--to-unfollow-instagram/releases/tag/0.1.0)
+[![Download Latest Release](https://img.shields.io/badge/Download-Latest%20Release-yellow?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Abeelha/-friends--to-unfollow-instagram/releases/tag/0.2.0)
 
 ## Purpose
 
